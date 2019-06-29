@@ -1,11 +1,9 @@
 module Main exposing (Model, Msg(..), init, main, update, view)
 
 import Browser
-import Debug exposing (log, toString)
 import Html exposing (Attribute, Html, div, h1, input, label, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
-import Json.Decode.Extra
 
 
 
@@ -52,6 +50,16 @@ parseFloat value =
             0
 
 
+normalizeInfinity : Float -> Float
+normalizeInfinity value =
+    case isInfinite value of
+        True ->
+            0
+
+        False ->
+            value
+
+
 integralFractional : Float -> ( Float, Float )
 integralFractional value =
     let
@@ -68,7 +76,7 @@ update msg model =
             { model
                 | minutes = value
                 , speed =
-                    String.fromFloat
+                    String.fromFloat <| normalizeInfinity
                         (60
                             / (parseFloat value
                                 + parseFloat model.seconds
@@ -81,7 +89,7 @@ update msg model =
             { model
                 | seconds = value
                 , speed =
-                    String.fromFloat
+                    String.fromFloat <| normalizeInfinity
                         (60
                             / (parseFloat model.minutes
                                 + parseFloat value
@@ -91,7 +99,9 @@ update msg model =
             }
 
         ChangeSpeed value ->
-            let (fractional, integral) = 60 / (value |> parseFloat) |> integralFractional
+            let
+                ( fractional, integral ) =
+                    60 / (value |> parseFloat) |> normalizeInfinity |> integralFractional
             in
             { model
                 | speed = value
