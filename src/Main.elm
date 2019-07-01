@@ -3,7 +3,7 @@ module Main exposing (Model, Msg(..), init, main, update, view)
 import Browser
 import Html exposing (Attribute, Html, div, h1, input, label, text)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onClick, onInput)
 import List exposing (indexedMap)
 import String exposing (join, left, padLeft, split)
 
@@ -44,7 +44,9 @@ type Msg
 
 parseFloat : String -> Float
 parseFloat value =
-    Maybe.withDefault 0 (String.toFloat value)
+    value
+        |> String.toFloat
+        |> Maybe.withDefault 0
 
 
 normalizeInfinity : Float -> Float
@@ -68,7 +70,9 @@ integralFractional value =
 
 formatDecimals : Float -> String
 formatDecimals value =
-    String.fromFloat value |> split "."
+    value
+        |> String.fromFloat
+        |> split "."
         |> indexedMap
             (\n item ->
                 if n == 1 then
@@ -87,28 +91,28 @@ update msg model =
             { model
                 | minutes = value
                 , speed =
-                    formatDecimals <|
-                        normalizeInfinity
-                            (60
-                                / (parseFloat value
-                                    + parseFloat model.seconds
-                                    / 60
-                                  )
-                            )
+                    (60
+                        / (parseFloat value
+                            + parseFloat model.seconds
+                            / 60
+                          )
+                    )
+                        |> normalizeInfinity
+                        |> formatDecimals
             }
 
         ChangeSeconds value ->
             { model
                 | seconds = value
                 , speed =
-                    formatDecimals <|
-                        normalizeInfinity
-                            (60
-                                / (parseFloat model.minutes
-                                    + parseFloat value
-                                    / 60
-                                  )
-                            )
+                    (60
+                        / (parseFloat model.minutes
+                            + parseFloat value
+                            / 60
+                          )
+                    )
+                        |> normalizeInfinity
+                        |> formatDecimals
             }
 
         ChangeSpeed value ->
@@ -129,20 +133,26 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ h1 [] [ text "Pace" ]
-        , div []
-            [ div []
+    div [ class "application" ]
+        [ h1 [] [ text "Runcalc 3000" ]
+        , div [ class "wrapper_pace" ]
+            [ div [ class "block_pace" ]
                 [ label [ for "input_min" ] [ text "Minutes" ]
-                , input [ id "input_min", value model.minutes, onInput ChangeMinutes ] []
+                , input [ id "input_min", class "input_minutes", maxlength 2, type_ "tel", pattern "[0-9]*", value model.minutes, onInput ChangeMinutes ] []
                 ]
-            , div []
+            , div [ class "meta_time-separator" ] [ text ":" ]
+            , div [ class "pace-block" ]
                 [ label [ for "input_sec" ] [ text "Seconds" ]
-                , input [ id "input_sec", value model.seconds, onInput ChangeSeconds ] []
+                , input [ id "input_sec", class "input_seconds", maxlength 2, type_ "tel", pattern "[0-9]*", value model.seconds, onInput ChangeSeconds ] []
                 ]
             ]
-        , div []
-            [ label [ for "input_speed" ] [ text "Speed" ]
-            , input [ id "input_speed", value model.speed, onInput ChangeSpeed ] []
+        , div [ class "wrapper_speed" ]
+            [ div [ class "block_speed" ]
+                [ label [ for "input_speed" ] [ text "Speed" ]
+                , div [ class "wrapper_speed-input" ]
+                    [ input [ id "input_speed", class "input_speed", type_ "tel", pattern "[0-9\\.]*", value model.speed, onInput ChangeSpeed ] []
+                    ]
+                ]
+            , div [ class "meta_speed-description" ] [ text "km/h" ]
             ]
         ]
